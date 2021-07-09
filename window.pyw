@@ -4,12 +4,14 @@ from selenium.webdriver.common.keys import Keys
 import time
 from tqdm import tqdm
 sg.theme('TealMono')
-layout =[ [sg.Image(r'C:\Users\Irina\Desktop\practice\Intuit.png', justification='center')],
-    [sg.Text('Программа для закачки курса INTUIT', justification='center')],
-    [ sg.Text('введите ссылку на 1 лекцию: ', size=(20,1)), sg.Input(k = '-IN-'), sg.Button('Парсинг')],
-    [ sg.Text('введите имя файла: ', size=(20,1)), sg.Input(k ='-OUT-') ],
-    [ sg.Text('Лекция: ', size=(20,1)), sg.Input(k = 'lecture')],
-    [ sg.ProgressBar(1, orientation='h', size=(45, 20), key='progress')]]
+layout =[ [sg.Image(r'C:\Users\Irina\Desktop\practice\Intuit.png')],
+    [ sg.Text('Программа для закачки курса INTUIT')],
+    [ sg.Text('введите ссылку на курс: ', size=(22,1)), sg.Input(k = '-IN-'), sg.Button('Парсинг')],
+    [ sg.Text('введите имя файла: ', size=(22,1)), sg.Input(k ='-OUT-') ], 
+    [ sg.Text('Лекция: ', size=(22,1)), sg.Input(k = 'lecture')],
+    [ sg.Text('Номер страницы: ', size=(22,1)), sg.Input(k = 'page', size=(10,1))],      
+    [ sg.ProgressBar(1, orientation='h', size=(46, 20), key='progress')]]
+
 window = sg.Window('Парсинг лекций с сайта Интуит', layout)
 progress_bar = window.FindElement('progress')
 while True:
@@ -26,10 +28,15 @@ while True:
         driver = webdriver.Firefox('C://Users//Irina//AppData//Local//Programs//Python//Python36')
         url = values['-IN-']
         driver.get( url )
+        link = driver.find_element_by_link_text('Лекция 1')
+        link.send_keys(Keys.RETURN)
+        print("лекция 1")
         
         progress_bar.UpdateBar(0, 5)
-        time.sleep(.5)
+        time.sleep(3)
         
+        page_num = 0
+        lect_name = ""
         while True:
             doc_state = driver.execute_script("return document.readyState")
             if doc_state == 'complete':
@@ -44,8 +51,19 @@ while True:
         for lect_header in lect_headers:
             text_header = lect_header.text
             html_header = '<div class = "abzag"> '+ text_header + ' </div>'
-            print( text_header)
+            #print( text_header)
             window['lecture'].update(text_header)
+            #print("Имя лекции:", lect_name )
+            print("Имя лекции:", lect_name )
+            print("Текст заголовка:", text_header)
+            if lect_name != text_header:
+                page_num = 1
+                lect_name = text_header
+                print("Имя лекции if:", lect_name )
+                print("Текст заголовка if:", text_header)
+            else:
+                page_num += 1
+            window['page'].update(page_num)
             fhd.write( html_header)
 
         prev_header = text_header   
@@ -83,6 +101,12 @@ while True:
             text_header = lect_headers[-1].text
             print( text_header)
             window['lecture'].update(text_header)
+            if lect_name != text_header:
+                page_num = 1
+                lect_name = text_header
+            else:
+                page_num += 1
+            window['page'].update(page_num)
             html_header = '<div class = "abzag"> '+ text_header + ' </div>'
             if prev_header != text_header:
                 fhd.write( html_header + "\n")
@@ -116,4 +140,3 @@ while True:
 time.sleep(3)
 
 window.close()
-
